@@ -1,0 +1,46 @@
+#include "logger.h"
+#include "asserts.h"
+
+//TODO: temporary
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+
+
+b8 initialize_logging(){
+    //TODO: creare a log file
+    return TRUE;
+}
+void shutdown_logging(){
+    // TODO: cleanup logging/write queued entries
+}
+
+void log_output(log_level level, const char *message, ...){
+    const char *level_strings[6] = {"[FATAL]:", "[ERROR]:", "[WARN]:", "[INFO]:", "[DEBUG]:", "[TRACE]:"};
+    // b8 is_error = level < 2;
+
+    // allocating buffer on stack. if it was on heap, it would be too slow to allocate memory each time we log something
+    const i32 BUFFER_SIZE = 32000; 
+    char message_buffer[BUFFER_SIZE];
+    memset(message_buffer, 0, BUFFER_SIZE);
+
+    // Format original message.
+    // NOTE Oddly enough, MS's headers override the GCC/Clang va_list type with a "typedef char* va_list" in some
+    // cases, and as a result throws a strange error here. The workaround for now is to just use __builtin_va_list,
+    // which is the type GCC/Clang's va_start expects.  
+    __builtin_va_list arg_ptr;
+    va_start(arg_ptr, message);
+    vsnprintf(message_buffer, BUFFER_SIZE, message, arg_ptr);
+    va_end(arg_ptr);
+
+    char output_buffer[BUFFER_SIZE];
+    sprintf(output_buffer, "%s%s\n", level_strings[level], message_buffer);
+    
+    // TODO: write platform specific output
+    printf("%s", output_buffer);
+}
+
+
+void report_assertion_failure(const char *expression, const char *message, const char *file, i32 line){
+    log_output(LOG_LEVEL_FATAL, "Assertion Failure: %s \nMessage: '%s'\nFile: %s[line:%d]\n", expression, message, file, line);
+}
