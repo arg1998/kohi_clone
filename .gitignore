@@ -1,3 +1,6 @@
 # Ignore everything in the bin directory except .gitkeep file 
 bin/*
 !bin/.gitkeep
+
+# Ignore the VS Code settings
+.vscode/settings.json
