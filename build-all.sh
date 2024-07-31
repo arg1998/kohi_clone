@@ -1,6 +1,8 @@
+#!/bin/bash
+
 # Build script for rebuilding everything
 set echo on
-
+clear
 echo "Building everything..."
 
 
