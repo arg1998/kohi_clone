@@ -16,7 +16,7 @@ void shutdown_logging(){
 }
 
 void log_output(log_level level, const char *message, ...){
-    const char *level_strings[6] = {"[FATAL]:", "[ERROR]:", "[WARN]:", "[INFO]:", "[DEBUG]:", "[TRACE]:"};
+    const char *level_strings[6] = {"[FATAL]: ", "[ERROR]: ", "[WARN] : ", "[INFO] : ", "[DEBUG]: ", "[TRACE]: "};
     // b8 is_error = level < 2;
 
     // allocating buffer on stack. if it was on heap, it would be too slow to allocate memory each time we log something
@@ -42,5 +42,5 @@ void log_output(log_level level, const char *message, ...){
 
 
 void report_assertion_failure(const char *expression, const char *message, const char *file, i32 line){
-    log_output(LOG_LEVEL_FATAL, "Assertion Failure: %s \nMessage: '%s'\nFile: %s[line:%d]\n", expression, message, file, line);
+    log_output(LOG_LEVEL_FATAL, "Assertion Failure \n\t |--expression: %s \n\t |--message: '%s'\n\t |--file: %s[line:%d]\n", expression, message, file, line);
 }
