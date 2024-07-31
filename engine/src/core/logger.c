@@ -1,5 +1,6 @@
 #include "logger.h"
 #include "asserts.h"
+#include "platform/platform.h"
 
 //TODO: temporary
 #include <stdio.h>
@@ -17,12 +18,12 @@ void shutdown_logging(){
 
 void log_output(log_level level, const char *message, ...){
     const char *level_strings[6] = {"[FATAL]: ", "[ERROR]: ", "[WARN] : ", "[INFO] : ", "[DEBUG]: ", "[TRACE]: "};
-    // b8 is_error = level < 2;
+    b8 is_error = level < LOG_LEVEL_WARN;
 
     // allocating buffer on stack. if it was on heap, it would be too slow to allocate memory each time we log something
     const i32 BUFFER_SIZE = 32000; 
     char message_buffer[BUFFER_SIZE];
-    memset(message_buffer, 0, BUFFER_SIZE);
+    memset(message_buffer, 0, sizeof(message_buffer));
 
     // Format original message.
     // NOTE Oddly enough, MS's headers override the GCC/Clang va_list type with a "typedef char* va_list" in some
@@ -36,8 +37,11 @@ void log_output(log_level level, const char *message, ...){
     char output_buffer[BUFFER_SIZE];
     sprintf(output_buffer, "%s%s\n", level_strings[level], message_buffer);
     
-    // TODO: write platform specific output
-    printf("%s", output_buffer);
+    if (is_error){
+        platform_console_write_error(output_buffer, level);
+    } else {
+        platform_console_write(output_buffer, level);
+    }
 }
 
 
