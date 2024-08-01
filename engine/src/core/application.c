@@ -1,7 +1,9 @@
 #include "application.h"
+
+#include "core/kmemory.h"
 #include "core/logger.h"
-#include "platform/platform.h"
 #include "game_types.h"
+#include "platform/platform.h"
 
 typedef struct application_state {
     game *game_inst;
@@ -45,14 +47,12 @@ KAPI b8 application_create(game *game_inst) {
     }
 
     // intialize the game
-    if(!app_state.game_inst->initialize(game_inst)){
+    if (!app_state.game_inst->initialize(game_inst)) {
         KFATAL("Game initalize() failed. Shutting down engine.")
         return FALSE;
     }
 
-
     app_state.game_inst->on_resize(game_inst, app_state.width, app_state.height);
-
 
     initialized = TRUE;
     return TRUE;
@@ -60,27 +60,28 @@ KAPI b8 application_create(game *game_inst) {
 
 // this function handles platform messaging and game loop
 KAPI b8 application_run() {
+    KINFO(get_memory_usage_str());
+
     while (app_state.is_running) {
         if (!platform_pump_messages(&app_state.platform)) {
             app_state.is_running = FALSE;
         }
 
         // check if we can update the viewport
-        if(!app_state.is_suspended){
+        if (!app_state.is_suspended) {
             // call the user-defined game update function
-            if(!app_state.game_inst->update(app_state.game_inst, (f32)0)){
+            if (!app_state.game_inst->update(app_state.game_inst, (f32)0)) {
                 KFATAL("Game update() failed. Shutting down engine.");
                 app_state.is_running = FALSE;
                 break;
             }
 
-            if(!app_state.game_inst->render(app_state.game_inst, (f32)0)){
+            if (!app_state.game_inst->render(app_state.game_inst, (f32)0)) {
                 KFATAL("Game render() failed. Shutting down engine.");
                 app_state.is_running = FALSE;
                 break;
             }
         }
-
     }
 
     //

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/application.h"
+#include "core/kmemory.h"
 #include "core/logger.h"
 #include "game_types.h"
 
@@ -12,6 +13,8 @@ extern b8 create_game(game *game_out);
  * The main entry point of the application
  */
 int main(void) {
+    initialize_memory();
+
     // request the game instance from the application
     game game_inst;
     if (!create_game(&game_inst)) {
@@ -31,12 +34,12 @@ int main(void) {
     }
 
     // Begin game loop
-    if( !application_run()){
+    if (!application_run()) {
         KINFO("Application did not shutdown gracefully.");
         return 2;
     }
 
-
+    shutdown_memory();
 
     return 0;
 }
