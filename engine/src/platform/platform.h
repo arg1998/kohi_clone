@@ -9,20 +9,20 @@ typedef struct platform_state
     void *internal_state;
 } platform_state;
 
-KAPI b8 platform_startup(
+b8 platform_startup(
     platform_state *plat_state,
     const char *application_name, // window title on desktop environment
     i32 x, i32 y,                 // position of the window
     i32 width, i32 height         // width and height of the window on the desktop environemnt
 );
 
-KAPI void platform_shutdown(platform_state *plat_state);
+void platform_shutdown(platform_state *plat_state);
 
 // continuosly loop over messages and channel them to the application
-KAPI b8 platform_pump_messages(platform_state *plat_state);
+b8 platform_pump_messages(platform_state *plat_state);
 
-void *platform_allocate(u64 size, b8 aligned);
-void platform_free(void *block, b8 aligned);
+KAPI void *platform_allocate(u64 size, b8 aligned);
+KAPI void platform_free(void *block, b8 aligned);
 void *platform_zero_memory(void *block, u64 size);
 void *platform_copy_memory(void *dest, const void *source, u64 size);
 void *platform_set_memory(void *dest, i32 value, u64 size);
