@@ -1,5 +1,6 @@
 #include "application.h"
 
+#include "core/event.h"
 #include "core/kmemory.h"
 #include "core/logger.h"
 #include "game_types.h"
@@ -34,6 +35,11 @@ KAPI b8 application_create(game *game_inst) {
 
     app_state.is_running = TRUE;
     app_state.is_suspended = FALSE;
+
+    if (!event_initialize()) {
+        KFATAL("Event system initialization failed. Application cannot continue.");
+        return FALSE;
+    }
 
     // start the application
     if (!platform_startup(
@@ -86,7 +92,7 @@ KAPI b8 application_run() {
 
     //
     app_state.is_running = FALSE;
-
+    event_shutdown();
     platform_shutdown(&app_state.platform);
 
     return TRUE;
