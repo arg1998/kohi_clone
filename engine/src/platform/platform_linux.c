@@ -3,29 +3,25 @@
 // if we are running on linux platform
 #if KPLATFORM_LINUX
 
+#include <X11/XKBlib.h>
+#include <X11/Xlib-xcb.h>
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <xcb/xcb.h>
+
 #include "core/logger.h"
 
-#include <xcb/xcb.h>
-#include <X11/keysym.h>
-#include <X11/XKBlib.h>
-#include <X11/Xlib.h>
-#include <X11/Xlib-xcb.h>
-#include <sys/time.h>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 #if _POSIX_C_SOURCE >= 199309L
-    #include <time.h> // nanosleep
+#include <time.h>  // nanosleep
 #else
-    #include <unistd.h> // usleep
+#include <unistd.h>  // usleep
 #endif
 
-
-
-typedef struct internal_state
-{
+typedef struct internal_state {
     Display *display;
     xcb_connection_t *connection;
     xcb_screen_t *screen;
@@ -35,9 +31,9 @@ typedef struct internal_state
 
 } internal_state;
 
-b8 platform_startup(platform_state *plat_state, const char *application_name, i32 x, i32 y, i32 width, i32 height){
+b8 platform_startup(platform_state *plat_state, const char *application_name, i32 x, i32 y, i32 width, i32 height) {
     plat_state->internal_state = malloc(sizeof(internal_state));
-    internal_state *state = (internal_state *) plat_state->internal_state;
+    internal_state *state = (internal_state *)plat_state->internal_state;
 
     // connect to X11 using Xlib client
     state->display = XOpenDisplay(NULL);
@@ -48,67 +44,65 @@ b8 platform_startup(platform_state *plat_state, const char *application_name, i3
     // retrieve the connection from the display
     state->connection = XGetXCBConnection(state->display);
 
-    if(xcb_connection_has_error(state->connection)){
+    if (xcb_connection_has_error(state->connection)) {
         KFATAL("Failed to connect to X11 Server via XCB client.");
         return FALSE;
     }
 
-    // get data from X11 Server 
+    // get data from X11 Server
     const xcb_setup_t *setup = xcb_get_setup(state->connection);
 
     // loop through screens using iterator
     xcb_screen_iterator_t it = xcb_setup_roots_iterator(setup);
     i32 screen_p = 0;
-    for(i32 s = screen_p; s > 0; s--){
+    for (i32 s = screen_p; s > 0; s--) {
         xcb_screen_next(&it);
     }
 
-    // after screens have been looped through, assign it 
+    // after screens have been looped through, assign it
     state->screen = it.data;
 
-    // alocate a XID for the window to be created 
+    // alocate a XID for the window to be created
     state->window = xcb_generate_id(state->connection);
 
-    // register an event mask 
+    // register an event mask
     // XCB_CW_BACK_PIXEL = filling the window background with single color
-    // XCB_CW_EVENT_MASK = a required mask 
+    // XCB_CW_EVENT_MASK = a required mask
     u32 event_maks = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
 
     // listen for mouse and keyboard
-    u32 event_values =  XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
-                        XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE | 
-                        XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_POINTER_MOTION |
-                        XCB_EVENT_MASK_STRUCTURE_NOTIFY;
+    u32 event_values = XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
+                       XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
+                       XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_POINTER_MOTION |
+                       XCB_EVENT_MASK_STRUCTURE_NOTIFY;
 
     // send background color and events over XCB
     u32 value_list[] = {state->screen->black_pixel, event_values};
 
     xcb_void_cookie_t cookie = xcb_create_window(
         state->connection,
-        XCB_COPY_FROM_PARENT, // depth
+        XCB_COPY_FROM_PARENT,  // depth
         state->window,
-        state->screen->root, // parent
-        x, y, width, height, 
-        0, // border width
-        XCB_WINDOW_CLASS_INPUT_OUTPUT, 
+        state->screen->root,  // parent
+        x, y, width, height,
+        0,  // border width
+        XCB_WINDOW_CLASS_INPUT_OUTPUT,
         state->screen->root_visual,
-        event_maks, 
-        value_list
-    );
+        event_maks,
+        value_list);
 
-
-    //change the title of the window
+    // change the title of the window
     xcb_change_property(
         state->connection,
-        XCB_PROP_MODE_REPLACE, 
+        XCB_PROP_MODE_REPLACE,
         state->window,
         XCB_ATOM_WM_NAME,
         XCB_ATOM_STRING,
-        8, // a character is one byte. if its unicode then we need to change this based on the length of one unicode character
+        8,  // a character is one byte. if its unicode then we need to change this based on the length of one unicode character
         strlen(application_name),
         application_name);
 
-        // Tell the server to notify when the window manager
+    // Tell the server to notify when the window manager
     // attempts to destroy the window.
     xcb_intern_atom_cookie_t wm_delete_cookie = xcb_intern_atom(
         state->connection,
@@ -120,11 +114,11 @@ b8 platform_startup(platform_state *plat_state, const char *application_name, i3
         0,
         strlen("WM_PROTOCOLS"),
         "WM_PROTOCOLS");
-    xcb_intern_atom_reply_t* wm_delete_reply = xcb_intern_atom_reply(
+    xcb_intern_atom_reply_t *wm_delete_reply = xcb_intern_atom_reply(
         state->connection,
         wm_delete_cookie,
         NULL);
-    xcb_intern_atom_reply_t* wm_protocols_reply = xcb_intern_atom_reply(
+    xcb_intern_atom_reply_t *wm_protocols_reply = xcb_intern_atom_reply(
         state->connection,
         wm_protocols_cookie,
         NULL);
@@ -152,12 +146,11 @@ b8 platform_startup(platform_state *plat_state, const char *application_name, i3
     }
 
     return TRUE;
-
 }
 
 void platform_shutdown(platform_state *plat_state) {
-        // Simply cold-cast to the known type.
-    internal_state* state = (internal_state*)plat_state->internal_state;
+    // Simply cold-cast to the known type.
+    internal_state *state = (internal_state *)plat_state->internal_state;
 
     // Turn key repeats back on since this is global for the OS... just... wow.
     XAutoRepeatOn(state->display);
@@ -165,12 +158,12 @@ void platform_shutdown(platform_state *plat_state) {
     xcb_destroy_window(state->connection, state->window);
 }
 
-b8 platform_pump_messages(platform_state* plat_state) {
+b8 platform_pump_messages(platform_state *plat_state) {
     // Simply cold-cast to the known type.
-    internal_state* state = (internal_state*)plat_state->internal_state;
+    internal_state *state = (internal_state *)plat_state->internal_state;
 
-    xcb_generic_event_t* event;
-    xcb_client_message_event_t* cm;
+    xcb_generic_event_t *event;
+    xcb_client_message_event_t *cm;
 
     b8 quit_flagged = FALSE;
 
@@ -189,17 +182,17 @@ b8 platform_pump_messages(platform_state* plat_state) {
             case XCB_BUTTON_PRESS:
             case XCB_BUTTON_RELEASE: {
                 // TODO: Mouse button presses and releases
-            }
-            case XCB_MOTION_NOTIFY:
+            } break;
+            case XCB_MOTION_NOTIFY: {
                 // TODO: mouse movement
-                break;
+            } break;
 
             case XCB_CONFIGURE_NOTIFY: {
                 // TODO: Resizing
-            }
+            } break;
 
             case XCB_CLIENT_MESSAGE: {
-                cm = (xcb_client_message_event_t*)event;
+                cm = (xcb_client_message_event_t *)event;
 
                 // Window close
                 if (cm->data.data32[0] == state->wm_delete_win) {
@@ -236,18 +229,17 @@ void *platform_set_memory(void *dest, i32 value, u64 size) {
     return memset(dest, value, size);
 }
 
-void platform_console_write(const char* message, u8 colour) {
+void platform_console_write(const char *message, u8 colour) {
     // FATAL,ERROR,WARN,INFO,DEBUG,TRACE
-    const char* colour_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
+    const char *colour_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
     printf("\033[%sm%s\033[0m", colour_strings[colour], message);
 }
 
-void platform_console_write_error(const char* message, u8 colour) {
+void platform_console_write_error(const char *message, u8 colour) {
     // FATAL,ERROR,WARN,INFO,DEBUG,TRACE
-    const char* colour_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
+    const char *colour_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
     printf("\033[%sm%s\033[0m", colour_strings[colour], message);
 }
-
 
 f64 platform_get_absolute_time() {
     struct timespec now;
@@ -269,4 +261,4 @@ void platform_sleep(u64 ms) {
 #endif
 }
 
-#endif // KPLATFORM_LINUX
+#endif  // KPLATFORM_LINUX
