@@ -26,7 +26,7 @@ int main(void) {
     }
 
     if (!application_create(&game_inst)) {
-        KINFO("Application faield to create.")
+        KFATAL("Application faield to create.")
         return 1;
     }
 
