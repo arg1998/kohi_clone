@@ -20,6 +20,8 @@ typedef struct event_context {
         u16 u16[8];
 
         // 16 * 8-bits values = 128
+        i8 i8[16];
+        u8 u8[16];
         char c[16];
     } data;
 } event_context;
