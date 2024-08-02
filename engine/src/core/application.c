@@ -5,6 +5,7 @@
 #include "core/logger.h"
 #include "game_types.h"
 #include "platform/platform.h"
+#include "core/input.h"
 
 typedef struct application_state {
     game *game_inst;
@@ -32,6 +33,7 @@ KAPI b8 application_create(game *game_inst) {
 
     // initialize subsytems
     initialize_logging();
+    input_initialize();
 
     app_state.is_running = TRUE;
     app_state.is_suspended = FALSE;
@@ -87,12 +89,19 @@ KAPI b8 application_run() {
                 app_state.is_running = FALSE;
                 break;
             }
+
+            // NOTE: Input update/state copying should always be handled
+            // after any input should be recorded; I.E. before this line.
+            // As a safety, input is the last thing to be updated before
+            // this frame ends.
+            input_update(0);
         }
     }
 
     //
     app_state.is_running = FALSE;
     event_shutdown();
+    input_shutdown();
     platform_shutdown(&app_state.platform);
 
     return TRUE;
