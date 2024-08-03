@@ -1,6 +1,7 @@
 #include "core/kmemory.h"
 
 #include "core/logger.h"
+#include "core/kstring.h"
 #include "platform/platform.h"
 
 // TODO: remove this when we implemented a string library
@@ -105,6 +106,6 @@ char* get_memory_usage_str() {
         offset += length;
     }
     // convert the buffer on the stack and duplicate it on the heap and return it.
-    char* out_string = _strdup(buffer);
+    char* out_string = string_duplicate(buffer);
     return out_string;  // note that we have to free this memory!
 }
