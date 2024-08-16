@@ -10,6 +10,11 @@ char* string_duplicate(const char* str) {
     return copy_str;
 }
 
-u64 string_length(const char* str){
+u64 string_length(const char* str) {
     return strlen(str);
+}
+
+// Case-sensitive string comparison. True if the same, otherwise false.
+b8 strings_equal(const char* str0, const char* str1) {
+    return strcmp(str0, str1) == 0;
 }
