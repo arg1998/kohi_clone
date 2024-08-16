@@ -1,4 +1,6 @@
 #include "platform/platform.h"
+#include "core/logger.h"
+#include "containers/darray.h"
 
 // if we are running on linux platform
 #if KPLATFORM_LINUX
@@ -13,7 +15,6 @@
 #include <sys/time.h>
 #include <xcb/xcb.h>
 
-#include "core/logger.h"
 
 #if _POSIX_C_SOURCE >= 199309L
 #include <time.h>  // nanosleep
@@ -259,6 +260,10 @@ void platform_sleep(u64 ms) {
     }
     usleep((ms % 1000) * 1000);
 #endif
+}
+
+void platform_get_required_extension_names(const char ***extensions_darray) {
+    darray_push(*extensions_darray, &"VK_KHR_xcb_surface");
 }
 
 #endif  // KPLATFORM_LINUX
